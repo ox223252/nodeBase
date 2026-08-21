@@ -1,0 +1,21 @@
+{
+  "name": "slade",
+  "version": "1.0.0",
+  "description": "file explorer online",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js -p 65500",
+    "test": "nodemon --ignore privatre --exec 'clear && npm run start'"
+  },
+  "dependencies": {
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "helmet": "^8.3.0",
+    "socket.io": "^4.8.3",
+    "yargs": "^18.1.0"
+  }
+}

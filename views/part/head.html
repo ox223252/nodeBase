@@ -1,0 +1,42 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="icon"       type="image/png" href="imgs/logo.png" />
+<link rel="stylesheet" type="text/css"  href="css/color.css">
+<link rel="stylesheet" type="text/css"  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
+<link rel="stylesheet" type="text/css"  href="css/main.css">
+
+<title><%- locals.title %></title>
+<script src="socket.io.js" nonce="<%- locals.nonce %>"></script>
+<script nonce="<%- locals.nonce %>">
+	var socket = io.connect ( window.location.origin ,{
+		reconnection: true,
+		reconnectionAttempts: 50,
+		reconnectionDelay: 5000,
+		reconnectionDelayMax: 25000,
+	});
+
+	socket.on ( "connect", ()=>{
+		let nav = [ ...document.getElementsByClassName ( "connectionStatus" ) ].map ( n=>{
+				console.log ( n )
+				n.classList.remove ( "disconnected" );
+			});
+
+		socket .emit ( "identify", {
+			user:"<%- locals.user %>",
+			page:"<%- locals.page %>"
+		});
+	});
+
+	socket.on ( "disconnect", ()=>{
+		let nav = [ ...document.getElementsByClassName ( "connectionStatus" ) ].map ( n=>{
+				console.log ( n )
+				n.classList.add ( "disconnected" );
+			});
+
+		socket .emit ( "identify", {
+			user:"<%- locals.user %>",
+			page:"<%- locals.page %>"
+		});
+	});
+</script>

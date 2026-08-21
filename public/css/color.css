@@ -1,0 +1,7 @@
+:root {
+	color-scheme: light dark;
+
+	--grey: rgba( 128, 128, 128, 0.5 );
+	--disconnected: red;
+	--connected: green;
+}
