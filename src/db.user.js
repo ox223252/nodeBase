@@ -1,4 +1,7 @@
+import fs from 'fs'; // read / write files
 import util from 'util';
+import crypto from 'crypto'; // sha512
+import chokidar from "chokidar";
 import childProcess from 'child_process';
 
 const exec = util.promisify ( childProcess.exec );
@@ -9,17 +12,12 @@ class User {
 
 	}
 
-	init ( )
-	{
-		return Promise.resolve ( );
-	}
-
 	login ( )
 	{
 		return Promise.reject ( );
 	}
 
-	check ( )
+	exist ( )
 	{
 		return Promise.reject ( );
 	}
@@ -30,6 +28,11 @@ class User {
 	}
 
 	rm ( )
+	{
+		return Promise.reject ( );
+	}
+
+	get users ( )
 	{
 		return Promise.reject ( );
 	}
@@ -68,7 +71,7 @@ class UfLinux extends User {
 
 	login ( name, passwd )
 	{
-		return this._getAllowed ( )
+		return this.users
 			.then ( r=>{
 				if ( 0 > r.indexOf ( name ) )
 				{
@@ -83,10 +86,9 @@ class UfLinux extends User {
 			.catch ( r=>{
 				throw "invalid";
 			})
-
 	}
 
-	check ( name )
+	exist ( name )
 	{
 		if ( !this._isRoot )
 		{
@@ -109,7 +111,7 @@ class UfLinux extends User {
 			return Promise.reject ( "user add : neet to be root" );
 		}
 
-		return this.check ( name )
+		return this.exist ( name )
 			.then ( ()=>{
 				return exec ( `usermod -a -G ${this.group} ${name}` )
 			})
@@ -118,7 +120,7 @@ class UfLinux extends User {
 			})
 	}
 
-	_getAllowed ( )
+	get users ( )
 	{
 		return exec ( `getent group | grep ${this.group} | cut -d':' -f4` )
 			.then ( r=>r.stdout.trim ( ).split ( "," ) )
@@ -142,6 +144,164 @@ class UfLinux extends User {
 	}
 }
 
+class UfFile extends User {
+	constructor ( params )
+	{
+		super ( );
+
+		this._file = params.file;
+		let path = this._file.substring ( 0, this._file.lastIndexOf ( "/" ) );
+		if ( !fs.existsSync ( path ) )
+		{
+			fs.mkdirSync ( path, {recursive:true} )
+		}
+
+		function parse ( path )
+		{
+			let tmp;
+			try
+			{
+				tmp = fs.readFileSync ( path, "utf-8" );
+				tmp = eval ( tmp );
+			}
+			catch ( e )
+			{
+				tmp = [];
+			}
+
+			return tmp;
+		}
+
+		let watcher = chokidar.watch ( this._file, {ignored: /^\.+/} )
+			.on ( 'add', ()=>{
+				this.db = parse ( this._file );
+
+				if ( 0 == this.db.length )
+				{
+					this._firstRoot ( );
+				}
+			})
+			.on ( 'change', ()=>{
+				this.db = parse ( this._file );
+
+				if ( 0 == this.db.length )
+				{
+					this._firstRoot ( );
+				}
+			})
+			.on ( 'unlink', ()=>{
+				this.db = [];
+			})
+
+		if ( !fs.existsSync ( this._file ) )
+		{
+			this._firstRoot ( );
+			this.db = [];
+		}
+	}
+
+	_firstRoot ( )
+	{
+		console.log ( ` - Use file DB to connect` )
+		console.log ( `   - no user defined, next one will be root` )
+	}
+
+	login ( name, passwd )
+	{
+		if ( 0 == this.db.length )
+		{
+			return this.add ( name, passwd );
+		}
+		else
+		{
+			this.users
+				.then ( r=>{
+					let index = r.indexOf ( name );
+
+					if ( -1 == index )
+					{
+						throw "invalid";
+					}
+
+					let hash = crypto.createHash ( 'sha512' ).update ( passwd ).digest ( 'hex' )
+					if ( hash != this.db[ index ].pass )
+					{
+						throw "invalid"
+					}
+
+					return 0;
+				})
+		}
+	}
+
+	exist ( name )
+	{
+		return this.users
+			.then ( r=>{
+				if ( -1 < r.indexOf ( name ) )
+				{
+					return 0;
+				}
+				else
+				{
+					throw "invalid";
+				}
+			})
+	}
+
+	add ( name, passwd, params = {} )
+	{
+		let nUser = Object.assign ({
+			name: name,
+			pass: crypto.createHash ( 'sha512' ).update ( passwd ).digest ( 'hex' ),
+		}, params )
+
+		try
+		{
+			let index = this.db.map ( u=>u.name ).indexOf ( name );
+			if ( -1 != index )
+			{
+				this.db[ index ] = nUser;
+			}
+			else
+			{
+				this.db.push ( nUser );
+			}
+
+			this.db = this.db;
+
+			return Promise.resolve ( 0 );
+		}
+		catch ( e )
+		{
+			return Promise.reject ( "invalid" );
+		}
+	}
+
+	get users ( )
+	{
+		return Promise.resolve ( this._db.map ( u=>u.name ) );
+	}
+
+	set db ( value )
+	{
+		if ( "Array" != value?.constructor.name )
+		{
+			throw "invalide db format";
+		}
+		else
+		{
+			this._db = value;
+			fs.writeFileSync ( this._file, JSON.stringify ( this._db, null, 4 ) );
+		}
+	}
+
+	get db ( )
+	{
+		return this._db;
+	}
+}
+
 export default function ( params )
 {
 	switch ( params.args.user )
@@ -155,6 +315,12 @@ export default function ( params )
 			break;
 		}
 		case "file":
+		{
+			params.user = new UfFile ( {
+				file: params.args.userFile
+			} );
+			break;
+		}
 		default:
 		{
 			throw "user management mode unknow";

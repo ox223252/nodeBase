@@ -7,10 +7,14 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js -p 65500",
-    "test": "nodemon --ignore privatre --exec 'clear && npm run start'"
+    "start": "node index.js -p 65500 -u file",
+    "test": "nodemon --exec 'clear && npm run start'"
+  },
+  "nodemonConfig": {
+      "ignore": ["private/*"]
   },
   "dependencies": {
+    "chokidar": "^5.0.0",
     "ejs": "^6.0.1",
     "express": "^5.2.1",
     "express-session": "^1.19.0",

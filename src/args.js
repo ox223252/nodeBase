@@ -47,8 +47,12 @@ export default function ( params )
 			default: 'linux',
 		})
 		.option ( 'userGroup', {
-			describe: 'name of groupe for linux user\'s',
+			describe: 'name of group for user from linux',
 			default: 'loginForNodeApp',
+		})
+		.option ( 'userFile', {
+			describe: 'file for user by file ( file using JSON format )',
+			default: 'private/userDB.js',
 		})
 		.argv;
 
