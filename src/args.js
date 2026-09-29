@@ -40,17 +40,16 @@ export default function ( params )
 			type: 'number',
 			default: 4096
 		})
-		.option ( 'user', {
-			alias: 'u',
+		.option ( 'login', {
 			describe: 'user login mode',
    			choices: [ 'linux', 'file' ],
 			default: 'linux',
 		})
-		.option ( 'userGroup', {
+		.option ( 'loginGroup', {
 			describe: 'name of group for user from linux',
 			default: 'loginForNodeApp',
 		})
-		.option ( 'userFile', {
+		.option ( 'loginFile', {
 			describe: 'file for user by file ( file using JSON format )',
 			default: 'private/userDB.js',
 		})

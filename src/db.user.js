@@ -304,26 +304,26 @@ class UfFile extends User {
 
 export default function ( params )
 {
-	switch ( params.args.user )
+	switch ( params.args.login )
 	{
 		case "linux":
 		{
-			params.user = new UfLinux ( {
-				group: params.args.userGroup
+			params.login = new UfLinux ( {
+				group: params.args.loginGroup
 			} );
 			
 			break;
 		}
 		case "file":
 		{
-			params.user = new UfFile ( {
-				file: params.args.userFile
+			params.login = new UfFile ( {
+				file: params.args.loginFile
 			} );
 			break;
 		}
 		default:
 		{
-			throw "user management mode unknow";
+			throw `user management mode unknow : ${params.args.login}`;
 		}
 	}
 
