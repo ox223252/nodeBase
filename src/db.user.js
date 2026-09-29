@@ -206,32 +206,57 @@ class UfFile extends User {
 		console.log ( `   - no user defined, next one will be root` )
 	}
 
-	login ( name, passwd )
+	login ( name, passwd, token )
 	{
 		if ( 0 == this.db.length )
 		{
 			return this.add ( name, passwd );
 		}
-		else
+		
+		if ( token )
 		{
-			this.users
-				.then ( r=>{
-					let index = r.indexOf ( name );
+			let index = this.db.map ( u=>u.token )
+				.indexOf ( token );
 
-					if ( -1 == index )
-					{
-						throw "invalid";
-					}
+			if ( -1 == index )
+			{
+			}
+			else
+			{
+				let tmp = { ...this.db[ index ] }
 
-					let hash = crypto.createHash ( 'sha512' ).update ( passwd ).digest ( 'hex' )
-					if ( hash != this.db[ index ].pass )
-					{
-						throw "invalid"
-					}
+				delete tmp.pass;
 
-					return 0;
-				})
+				return Promise.resolve ( tmp );
+			}
 		}
+		else if ( !name
+			&& !passwd )
+		{
+			throw "invalid";
+		}
+
+		return this.users
+			.then ( r=>{
+				let index = r.indexOf ( name );
+
+				if ( -1 == index )
+				{
+					throw "invalid";
+				}
+
+				let hash = crypto.createHash ( 'sha512' ).update ( passwd ).digest ( 'hex' )
+				if ( hash != this.db[ index ].pass )
+				{
+					throw "invalid"
+				}
+
+				let tmp = { ...this.db[ index ] }
+
+				delete tmp.pass;
+
+				return tmp;
+			})
 	}
 
 	exist ( name )
@@ -254,6 +279,7 @@ class UfFile extends User {
 		let nUser = Object.assign ({
 			name: name,
 			pass: crypto.createHash ( 'sha512' ).update ( passwd ).digest ( 'hex' ),
+			token: crypto.createHash ( 'sha512' ).update ( Math.random ( ).toString ( ) ).digest ( 'hex' ),
 		}, params )
 
 		try
@@ -270,7 +296,7 @@ class UfFile extends User {
 
 			this.db = this.db;
 
-			return Promise.resolve ( 0 );
+			return Promise.resolve ( nUser );
 		}
 		catch ( e )
 		{
