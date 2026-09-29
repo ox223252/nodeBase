@@ -43,16 +43,18 @@
 			{
 				let data = {
 					user: domEls.user.value,
-					pass: domEls.pass.value
+					pass: domEls.pass.value,
+					token: localStorage.getItem ( "<%- locals.title %>" ),
 				};
 
-				if ( !user
-					|| !pass )
+				if ( ( !data.user
+						|| !data.pass )
+					&& !data.token )
 				{
 					return;
 				}
 
-				fetch ( "/login", {
+				fetch ( "/ajax/login", {
 						method: "POST",
 						body: JSON.stringify( data ),
 						headers: { "Content-Type": "application/json" },
@@ -66,6 +68,10 @@
 						{
 							throw r.json ( );
 						}
+					})
+					.then ( r=>{
+						localStorage.setItem ( "<%- locals.title %>", r.token );
+						return r;
 					})
 					.then ( r=>{
 						return new Promise ( (ok,_)=>{
@@ -106,6 +112,14 @@
 					sentCredential ( );
 				}
 			});
+
+			window.onload = ()=>{
+				<% if ( locals.logged ) { %>
+					localStorage.removeItem ( "<%- locals.title %>" );
+				<% } else { %>
+					sentCredential ( );
+				<% } %>
+			};
 		</script>
 	</body>
 </html>

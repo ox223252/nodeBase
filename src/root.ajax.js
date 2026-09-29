@@ -2,16 +2,22 @@ export default function ( params )
 {
 	console.log ( "   - Init Ajax part" );
 
-	params.express.post ( '/login', function ( req, res )
+	params.express.post ( '/ajax/login', function ( req, res )
 	{
-		params.user.login ( req.body.user, req.body.pass )
+		params.login.login ( req.body.user, req.body.pass, req.body.token )
 			.then ( r=>{
-				req.session.user = req.body.user;
-				req.session.logged = true;
+				req.session.user = r.name;
+				req.session.logged = r.status || true;
+
+				if ( "/login" == req.session.target )
+				{
+					req.session.target = "/";
+				}
 
 				res.status ( 200 );
 				res.json ({
-					target: req.session.target
+					target: req.session.target,
+					token: r.token,
 				});
 				res.end ( );
 			})
@@ -20,20 +26,6 @@ export default function ( params )
 				res.json ({});
 				res.end ( );
 			})
-	});
-
-	params.express.put ( '/login', function ( req, res )
-	{
-		res.status ( 200 );
-		res.json ({});
-		res.end ( );
-	});
-
-	params.express.delete ( '/login', function ( req, res )
-	{
-		res.status ( 200 );
-		res.json ({});
-		res.end ( );
 	});
 
 	return params;
