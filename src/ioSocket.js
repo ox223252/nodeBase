@@ -9,38 +9,43 @@ export default function ( params )
 
 	params.connected = {};
 
-	console.log ( )
-
 	params.io.on ( "connection", function( socket )
 	{
 		let id = socket.request.sessionID;
 		let index = undefined;
+
+		if ( !params.connected[ id ] )
+		{
+			params.connected[ id ] = {
+				user: "unknow",
+				page: {},
+				id: id,
+			};
+		}
 
 		socket.on ( "identify", ( msg )=>{
 			if ( !params.connected[ id ] )
 			{
 				params.connected[ id ] = {
 					user: msg.user,
-					page: [],
+					page: {},
 					id: id,
 				};
 			}
 
-			index = params.connected[ id ].page.length;
-
-			params.connected[ id ].page[ index ] = msg.page;
+			params.connected[ id ].user = msg.user;
+			params.connected[ id ].page[ socket.id ] = msg.page;
 		});
 		
 		socket.on ( "disconnect", ( )=>{
-			params.connected[ id ].page[ index ] = undefined;
+			delete params.connected[ id ].page[ socket.id ];
 
-			if ( 0 == params.connected[ id ].page?.filter ( f=>f ).length )
+			if ( 0 == Object.keys ( params.connected[ id ].page ).length )
 			{
 				delete params.connected[ id ];
 			}
 		});
 	});
-
 
 	return params;
 }

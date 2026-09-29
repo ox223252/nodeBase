@@ -16,27 +16,68 @@
 		reconnectionDelayMax: 25000,
 	});
 
+	let firstConnection = true;
+
 	socket.on ( "connect", ()=>{
 		let nav = [ ...document.getElementsByClassName ( "connectionStatus" ) ].map ( n=>{
-				console.log ( n )
 				n.classList.remove ( "disconnected" );
 			});
 
-		socket .emit ( "identify", {
-			user:"<%- locals.user %>",
-			page:"<%- locals.page %>"
-		});
+		if ( firstConnection )
+		{
+			socket .emit ( "identify", {
+				user:"<%- locals.user %>",
+				page:"<%- locals.page %>"
+			});
+		}
+		else if ( !localStorage.getItem ( "<%- locals.title %>" ) )
+		{ // if no token -> strange
+			socket .emit ( "identify", {
+				user:"<%- locals.user %>-disconnected",
+				page:"<%- locals.page %>"
+			});
+		}
+		else
+		{ // reconnect
+			fetch ( "/ajax/login", {
+					method: "POST",
+					body: JSON.stringify( {token: localStorage.getItem ( "<%- locals.title %>" ) }),
+					headers: { "Content-Type": "application/json" },
+				})
+				.then ( r=>{
+					if ( r.ok )
+					{
+						return r.json ( );
+					}
+					else
+					{
+						throw r.json ( );
+					}
+				})
+				.then ( ()=>{
+					socket .emit ( "identify", {
+						user:"<%- locals.user %>",
+						page:"<%- locals.page %>"
+					});
+				})
+				.catch ( ()=>{
+					window.location.href = window.location.origin;
+				})
+		}
+
+		firstConnection = false;
 	});
 
 	socket.on ( "disconnect", ()=>{
 		let nav = [ ...document.getElementsByClassName ( "connectionStatus" ) ].map ( n=>{
-				console.log ( n )
 				n.classList.add ( "disconnected" );
 			});
+	});
 
-		socket .emit ( "identify", {
-			user:"<%- locals.user %>",
-			page:"<%- locals.page %>"
-		});
+
+	socket.on ( "disconnect", ()=>{
+		let nav = [ ...document.getElementsByClassName ( "connectionStatus" ) ].map ( n=>{
+				n.classList.add ( "disconnected" );
+			});
 	});
 </script>

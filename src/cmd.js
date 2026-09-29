@@ -46,7 +46,7 @@ export default function ( params )
 					case "users":
 					{
 						Object.values ( params.connected ).map ( v=>{
-							console.log ( `${v.user} ${v.id} :\n\t${v.page.join ( "\n\t" )}` )
+							console.log ( `${v.user} ${v.id} :\n\t${Object.entries ( v.page ).map ( v=>v[ 0 ]+'\t'+v[ 1 ] ).join ( "\n\t" )}` )
 						})
 						break;
 					}
