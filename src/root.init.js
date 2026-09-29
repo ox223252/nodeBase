@@ -100,7 +100,7 @@ export default async function ( params )
 	{
 		res.locals.nonce  = crypto.randomBytes ( 16 ).toString ( "base64" );
 
-		res.locals.title = "app title";
+		res.locals.title = params.name;
 		res.locals.user = req.session.user || "unknow";
 		res.locals.page = req.originalUrl;
 		res.locals.logged = req.session.logged;
