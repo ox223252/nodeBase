@@ -4,7 +4,7 @@
 		<%- include ( "part/head.html" ) -%>
 	</head>
 	<body>
-		<aside>
+		<aside id="logEl">
 			<div>
 				<label for="user" class="fa-solid fa-user"></label>
 				<input id="user" type="text" >
@@ -19,6 +19,7 @@
 		</aside>
 		<script nonce="<%- locals.nonce %>">
 			let domEls = {
+				logEl: document.getElementById ( "logEl" ),
 				user: document.getElementById ( "user" ),
 				eye: document.getElementById ( "passLabel" ),
 				pass: document.getElementById ( "pass" ),
@@ -54,6 +55,9 @@
 					return;
 				}
 
+				domEls.button.disabled = true;
+				domEls.logEl.style.backgroundColor = "var( --waitResponse )";
+
 				fetch ( "/ajax/login", {
 						method: "POST",
 						body: JSON.stringify( data ),
@@ -66,7 +70,7 @@
 						}
 						else
 						{
-							throw r.json ( );
+							throw r;
 						}
 					})
 					.then ( r=>{
@@ -92,7 +96,24 @@
 							window.location.href = window.location.origin;
 						}
 					})
-					.catch ( console.error )
+					.catch ( r=>{
+						if ( data.token )
+						{
+							localStorage.removeItem ( "<%- locals.title %>" );
+						}
+
+						if ( 403 == r.status )
+						{
+							domEls.logEl.style.backgroundColor = "var( --error )";
+							
+							setTimeout ( ()=>{
+								domEls.logEl.style.backgroundColor = "";
+							}, 500 );
+						}
+					})
+					.finally ( ()=>{
+						domEls.button.disabled = false;
+					})
 			}
 
 			domEls.button.addEventListener ( "click", sentCredential );

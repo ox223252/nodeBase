@@ -125,11 +125,12 @@ class UfLinux extends User {
 		return exec ( `getent group | grep ${this.group} | cut -d':' -f4` )
 			.then ( r=>r.stdout.trim ( ).split ( "," ) )
 			.then ( r=>{
-				if ( r.length > 1 )
+				if ( 0 <= r.indexOf ( "root" ) )
 				{
 					r.splice ( r.indexOf ( "root" ), 1 );
 				}
-				else
+
+				if ( 0 == r.length )
 				{
 					r = [ "root" ];
 				}
