@@ -19,7 +19,7 @@ getParams ( params )
 	.then ( root )
 	.then ( ajax )
 	.then ( socket )
+	.then ( cmd )
 	.catch ( r=>{
 		console.error ( "KO", r )
 	})
-	.then ( cmd )
