@@ -40,18 +40,36 @@ export default function ( params )
 			type: 'number',
 			default: 4096
 		})
-		.option ( 'login', {
+		.option ( 'login.mode', {
 			describe: 'user login mode',
-   			choices: [ 'linux', 'file' ],
-			default: 'linux',
+   			choices: [ 'linux', 'file', 'activeDirectory' ],
+			default: 'file',
 		})
-		.option ( 'loginGroup', {
+		.option ( 'login.group', {
 			describe: 'name of group for user from linux',
 			default: 'loginForNodeApp',
 		})
-		.option ( 'loginFile', {
+		.option ( 'login.file', {
 			describe: 'file for user by file ( file using JSON format )',
 			default: 'private/userDB.js',
+		})
+		.option ( 'login.ad.port', {
+			describe: '',
+			type: 'number',
+			default: 389,
+		})
+		.option ( 'login.ad.url', {
+			describe: '',
+			type: 'url',
+			default: 'ldap://ldap.domain.com',
+		})
+		.option ( 'login.ad.baseDN', {
+			describe: '',
+			default: 'dc=fldap,dc=domain,dc=com',
+		})
+		.option ( 'login.ad.domain', {
+			describe: 'add @domain.com to login fi needed',
+			default: 'domain.com',
 		})
 		.argv;
 

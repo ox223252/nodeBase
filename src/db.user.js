@@ -4,27 +4,29 @@ import crypto from 'crypto'; // sha512
 import chokidar from "chokidar";
 import childProcess from 'child_process';
 
+import ActiveDirectory from 'activedirectory'; // login with windows user account
+
 const exec = util.promisify ( childProcess.exec );
 
 class User {
-	constructor ( params )
+	constructor ( params = {})
 	{
-		this._file = params.file;
-		let path = this._file.substring ( 0, this._file.lastIndexOf ( "/" ) );
+		this._params = params;
+		let path = this._params.file.substring ( 0, this._params.file.lastIndexOf ( "/" ) );
 
 		if ( !fs.existsSync ( path ) )
 		{
 			fs.mkdirSync ( path, {recursive:true} )
 		}
 
-		if ( !fs.existsSync ( this._file ) )
+		if ( !fs.existsSync ( this._params.file ) )
 		{
 			this.db = [];
 		}
 	}
 
 	login ( token )
-	{		
+	{
 		if ( !token )
 		{
 			return Promise.reject ( );
@@ -73,7 +75,7 @@ class User {
 		else
 		{
 			this._db = value;
-			fs.writeFileSync ( this._file, JSON.stringify ( this._db, null, 4 ) );
+			fs.writeFileSync ( this._params.file, JSON.stringify ( this._db, null, 4 ) );
 		}
 	}
 
@@ -81,7 +83,7 @@ class User {
 	{
 		if ( !this._db ) try
 		{
-			this._db = JSON.parse ( fs.readFileSync ( this._file, "utf-8" ).toString ( ) );
+			this._db = JSON.parse ( fs.readFileSync ( this._params.file, "utf-8" ).toString ( ) );
 		}
 		catch ( e )
 		{
@@ -341,24 +343,93 @@ class UFile extends User {
 	}
 }
 
+class UAd extends User {
+	constructor ( params )
+	{
+		super ( params );
+
+		let ad = new ActiveDirectory ({
+			url: params.ad.url,
+			port: params.ad.port,
+			baseDN: params.ad.baseDN,
+		});
+
+		this._ad = {
+			authenticate: ( user,pass )=>{
+				return new Promise ( (ok,ko)=>{
+					ad.authenticate ( user, pass, (e,d)=>{
+						if ( e )
+						{
+							ko ( e );
+						}
+						else
+						{
+							ok ( d );
+						}
+					});
+				});
+			},
+			exist: ( user )=>{
+				return new Promise ( (ok,ko)=>{
+					ad.userExists ( user, ( e, d )=>{
+						if ( e )
+						{
+							ko ( );
+						}
+						else if ( d )
+						{
+							ok ( );
+						}
+						else
+						{
+							ko ( );
+						}
+					});
+				});
+			},
+		};
+	}
+
+	login ( user, pass, token )
+	{
+		return super.login ( token )
+			.catch ( r=>{
+				if ( -1 == user.indexOf ( "@" ) )
+				{
+					return this._ad.authenticate ( user+this._params.ad.domain, pass )
+				}
+				else
+				{
+					return this._ad.authenticate ( user, pass );
+				} 
+
+			})
+	}
+
+	exist ( name )
+	{
+		return this._ad.exist ( user );
+	}
+}
+
 export default function ( params )
 {
-	switch ( params.args.login )
+	switch ( params.args?.login?.mode )
 	{
 		case "linux":
 		{
-			params.login = new ULinux ( {
-				file: params.args.loginFile,
-				group: params.args.loginGroup
-			} );
+			params.login = new ULinux ( params.args?.login );
 			
 			break;
 		}
 		case "file":
 		{
-			params.login = new UFile ( {
-				file: params.args.loginFile
-			} );
+			params.login = new UFile ( params.args?.login );
+			break;
+		}
+		case "activeDirectory":
+		{
+			params.login = new UAd ( params.args?.login );
 			break;
 		}
 		default:
