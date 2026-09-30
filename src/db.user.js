@@ -44,6 +44,8 @@ class UfLinux extends User {
 		super ( );
 
 		this.group = params.group;
+		this._tokenFile = "./private/tokens.json";
+
 		this.init ( );
 	}
 
@@ -69,8 +71,28 @@ class UfLinux extends User {
 			})
 	}
 
-	login ( name, passwd )
+	login ( name, passwd, token )
 	{
+
+		if ( token )
+		{
+			let index = this.db.map ( u=>u.token )
+				.indexOf ( token );
+
+			if ( -1 == index )
+			{
+			}
+			else
+			{
+				return Promise.resolve ({ ...this.db[ index ] });
+			}
+		}
+		else if ( !name
+			&& !passwd )
+		{
+			throw "invalid";
+		}
+
 		return this.users
 			.then ( r=>{
 				if ( 0 > r.indexOf ( name ) )
@@ -81,7 +103,27 @@ class UfLinux extends User {
 				return exec ( `echo ${passwd} | su - ${name} -c exit 0` )
 			})
 			.then ( r=>{
-				return 0;
+				let index = this.db.map ( u=>u.name )
+					.indexOf ( name );
+
+				if ( -1 == index )
+				{
+					let t = {
+						name: name,
+						token: crypto.createHash ( 'sha512' ).update ( Math.random ( ).toString ( ) ).digest ( 'hex' ),
+					};
+
+					this.db = [ ...this.db, t ];
+
+					return { ...t };
+				}
+				else
+				{
+					this.db[ index ].token = crypto.createHash ( 'sha512' ).update ( Math.random ( ).toString ( ) ).digest ( 'hex' );
+					this.db = [ ...this.db ];
+					
+					return { ...this.db[ index ] };
+				}
 			})
 			.catch ( r=>{
 				throw "invalid";
@@ -142,6 +184,39 @@ class UfLinux extends User {
 	get _isRoot ( )
 	{
 		return process.getuid ( ) == 0;
+	}
+
+	get db ( )
+	{
+		if ( !this._tokens )
+		{
+			this._tokens = [];
+
+			if ( fs.existsSync ( this._tokenFile ) ) try
+			{
+				this._tokens = JSON.parse ( fs.readFileSync ( this._tokenFile ).toString ( ) );
+			}
+			catch ( e )
+			{
+				this._tokens = [];
+			}
+		}
+
+		return this._tokens;
+	}
+
+	set db ( value )
+	{
+		this._tokens = value;
+
+		try
+		{
+			fs.writeFileSync ( this._tokenFile, JSON.stringify ( this._tokens, null, 4 ) );
+		}
+		catch ( e )
+		{
+			console.log ( e );
+		}
 	}
 }
 
