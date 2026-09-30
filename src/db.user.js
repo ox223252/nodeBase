@@ -7,14 +7,40 @@ import childProcess from 'child_process';
 const exec = util.promisify ( childProcess.exec );
 
 class User {
-	constructor ( )
+	constructor ( params )
 	{
+		this._file = params.file;
+		let path = this._file.substring ( 0, this._file.lastIndexOf ( "/" ) );
 
+		if ( !fs.existsSync ( path ) )
+		{
+			fs.mkdirSync ( path, {recursive:true} )
+		}
+
+		if ( !fs.existsSync ( this._file ) )
+		{
+			this.db = [];
+		}
 	}
 
-	login ( )
-	{
-		return Promise.reject ( );
+	login ( token )
+	{		
+		if ( !token )
+		{
+			return Promise.reject ( );
+		}
+
+		let index = this.db.map ( u=>u.token )
+			.indexOf ( token );
+
+		if ( -1 == index )
+		{
+			return Promise.reject ( );
+		}
+		
+		let tmp = { ...this.db[ index ] };
+
+		return Promise.resolve ( tmp );
 	}
 
 	exist ( )
@@ -36,15 +62,42 @@ class User {
 	{
 		return Promise.reject ( );
 	}
+
+	set db ( value )
+	{
+		if ( "Array" != value?.constructor.name )
+		{
+			this._db = [];
+			throw "invalide db format";
+		}
+		else
+		{
+			this._db = value;
+			fs.writeFileSync ( this._file, JSON.stringify ( this._db, null, 4 ) );
+		}
+	}
+
+	get db ( )
+	{
+		if ( !this._db ) try
+		{
+			this._db = JSON.parse ( fs.readFileSync ( this._file, "utf-8" ).toString ( ) );
+		}
+		catch ( e )
+		{
+			this._db = [];
+		}
+
+		return this._db ?? [];
+	}
 }
 
-class UfLinux extends User {
+class ULinux extends User {
 	constructor ( params )
 	{
-		super ( );
+		super ( params );
 
 		this.group = params.group;
-		this._tokenFile = "./private/tokens.json";
 
 		this.init ( );
 	}
@@ -73,60 +126,46 @@ class UfLinux extends User {
 
 	login ( name, passwd, token )
 	{
-
-		if ( token )
-		{
-			let index = this.db.map ( u=>u.token )
-				.indexOf ( token );
-
-			if ( -1 == index )
-			{
-			}
-			else
-			{
-				return Promise.resolve ({ ...this.db[ index ] });
-			}
-		}
-		else if ( !name
-			&& !passwd )
-		{
-			throw "invalid";
-		}
-
-		return this.users
+		return super.login ( token )
 			.then ( r=>{
-				if ( 0 > r.indexOf ( name ) )
-				{
-					throw 'user not allowed';
-				}
-
-				return exec ( `echo ${passwd} | su - ${name} -c exit 0` )
+				return r;
 			})
-			.then ( r=>{
-				let index = this.db.map ( u=>u.name )
-					.indexOf ( name );
+			.catch ( ()=>{
+				return this.users
+					.then ( r=>{
+						if ( 0 > r.indexOf ( name ) )
+						{
+							throw 'user not allowed';
+						}
 
-				if ( -1 == index )
-				{
-					let t = {
-						name: name,
-						token: crypto.createHash ( 'sha512' ).update ( Math.random ( ).toString ( ) ).digest ( 'hex' ),
-					};
+						return exec ( `echo ${passwd} | su - ${name} -c exit 0` )
+					})
+					.then ( r=>{
+						let index = this.db.map ( u=>u.name )
+							.indexOf ( name );
 
-					this.db = [ ...this.db, t ];
+						if ( -1 == index )
+						{
+							let t = {
+								name: name,
+								token: crypto.createHash ( 'sha512' ).update ( Math.random ( ).toString ( ) ).digest ( 'hex' ),
+							};
 
-					return { ...t };
-				}
-				else
-				{
-					this.db[ index ].token = crypto.createHash ( 'sha512' ).update ( Math.random ( ).toString ( ) ).digest ( 'hex' );
-					this.db = [ ...this.db ];
-					
-					return { ...this.db[ index ] };
-				}
-			})
-			.catch ( r=>{
-				throw "invalid";
+							this.db = [ ...this.db, t ];
+
+							return { ...t };
+						}
+						else
+						{
+							this.db[ index ].token = crypto.createHash ( 'sha512' ).update ( Math.random ( ).toString ( ) ).digest ( 'hex' );
+							this.db = [ ...this.db ];
+
+							return { ...this.db[ index ] };
+						}
+					})
+					.catch ( r=>{
+						throw "invalid";
+					})
 			})
 	}
 
@@ -185,95 +224,12 @@ class UfLinux extends User {
 	{
 		return process.getuid ( ) == 0;
 	}
-
-	get db ( )
-	{
-		if ( !this._tokens )
-		{
-			this._tokens = [];
-
-			if ( fs.existsSync ( this._tokenFile ) ) try
-			{
-				this._tokens = JSON.parse ( fs.readFileSync ( this._tokenFile ).toString ( ) );
-			}
-			catch ( e )
-			{
-				this._tokens = [];
-			}
-		}
-
-		return this._tokens;
-	}
-
-	set db ( value )
-	{
-		this._tokens = value;
-
-		try
-		{
-			fs.writeFileSync ( this._tokenFile, JSON.stringify ( this._tokens, null, 4 ) );
-		}
-		catch ( e )
-		{
-			console.log ( e );
-		}
-	}
 }
 
-class UfFile extends User {
+class UFile extends User {
 	constructor ( params )
 	{
-		super ( );
-
-		this._file = params.file;
-		let path = this._file.substring ( 0, this._file.lastIndexOf ( "/" ) );
-		if ( !fs.existsSync ( path ) )
-		{
-			fs.mkdirSync ( path, {recursive:true} )
-		}
-
-		function parse ( path )
-		{
-			let tmp;
-			try
-			{
-				tmp = fs.readFileSync ( path, "utf-8" );
-				tmp = eval ( tmp );
-			}
-			catch ( e )
-			{
-				tmp = [];
-			}
-
-			return tmp;
-		}
-
-		let watcher = chokidar.watch ( this._file, {ignored: /^\.+/} )
-			.on ( 'add', ()=>{
-				this.db = parse ( this._file );
-
-				if ( 0 == this.db.length )
-				{
-					this._firstRoot ( );
-				}
-			})
-			.on ( 'change', ()=>{
-				this.db = parse ( this._file );
-
-				if ( 0 == this.db.length )
-				{
-					this._firstRoot ( );
-				}
-			})
-			.on ( 'unlink', ()=>{
-				this.db = [];
-			})
-
-		if ( !fs.existsSync ( this._file ) )
-		{
-			this._firstRoot ( );
-			this.db = [];
-		}
+		super ( params );
 	}
 
 	_firstRoot ( )
@@ -288,50 +244,34 @@ class UfFile extends User {
 		{
 			return this.add ( name, passwd );
 		}
-		
-		if ( token )
-		{
-			let index = this.db.map ( u=>u.token )
-				.indexOf ( token );
 
-			if ( -1 == index )
-			{
-			}
-			else
-			{
-				let tmp = { ...this.db[ index ] }
-
-				delete tmp.pass;
-
-				return Promise.resolve ( tmp );
-			}
-		}
-		else if ( !name
-			&& !passwd )
-		{
-			throw "invalid";
-		}
-
-		return this.users
+		return super.login ( token )
 			.then ( r=>{
-				let index = r.indexOf ( name );
+				delete r.pass;
+				return r;
+			})
+			.catch ( ()=>{
+				return this.users
+					.then ( r=>{
+						let index = r.indexOf ( name );
 
-				if ( -1 == index )
-				{
-					throw "invalid";
-				}
+						if ( -1 == index )
+						{
+							throw "invalid";
+						}
 
-				let hash = crypto.createHash ( 'sha512' ).update ( passwd ).digest ( 'hex' )
-				if ( hash != this.db[ index ].pass )
-				{
-					throw "invalid"
-				}
+						let hash = crypto.createHash ( 'sha512' ).update ( passwd ).digest ( 'hex' )
+						if ( hash != this.db[ index ].pass )
+						{
+							throw "invalid"
+						}
 
-				let tmp = { ...this.db[ index ] }
+						let tmp = { ...this.db[ index ] }
 
-				delete tmp.pass;
+						delete tmp.pass;
 
-				return tmp;
+						return tmp;
+					})
 			})
 	}
 
@@ -382,25 +322,22 @@ class UfFile extends User {
 
 	get users ( )
 	{
-		return Promise.resolve ( this._db.map ( u=>u.name ) );
+		return Promise.resolve ( this.db.map ( u=>u.name ) );
 	}
 
 	set db ( value )
 	{
-		if ( "Array" != value?.constructor.name )
+		super.db = value;
+
+		if ( 0 == this.db.length )
 		{
-			throw "invalide db format";
-		}
-		else
-		{
-			this._db = value;
-			fs.writeFileSync ( this._file, JSON.stringify ( this._db, null, 4 ) );
+			this._firstRoot ( );
 		}
 	}
 
 	get db ( )
 	{
-		return this._db;
+		return super.db;
 	}
 }
 
@@ -410,7 +347,8 @@ export default function ( params )
 	{
 		case "linux":
 		{
-			params.login = new UfLinux ( {
+			params.login = new ULinux ( {
+				file: params.args.loginFile,
 				group: params.args.loginGroup
 			} );
 			
@@ -418,7 +356,7 @@ export default function ( params )
 		}
 		case "file":
 		{
-			params.login = new UfFile ( {
+			params.login = new UFile ( {
 				file: params.args.loginFile
 			} );
 			break;
