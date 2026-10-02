@@ -4,7 +4,7 @@
 		<%- include ( "part/head.html" ) -%>
 	</head>
 	<body>
-		<aside id="logEl">
+		<section id="logEl" class="small">
 			<div>
 				<label for="user" class="fa-solid fa-user"></label>
 				<input id="user" type="text" >
@@ -16,7 +16,7 @@
 			<div>
 				<button id="button">Connexion</button>
 			</div>
-		</aside>
+		</section>
 		<script nonce="<%- locals.nonce %>">
 			let domEls = {
 				logEl: document.getElementById ( "logEl" ),

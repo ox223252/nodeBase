@@ -1,6 +1,9 @@
 <nav>
-	<a href="/" ><img src="imgs/logo.png"/></a>
-	<a href="/login" class="fa-solid fa-lock" <% if ( locals.logged ) { %>title="connected as <%- locals.user %>" <% } %>></a>
-	<div></div>
-	<i class="connectionStatus fa-solid fa-globe disconnected"></i>
+	<div>
+		<a href="/" ><img src="imgs/logo.png"/></a>
+		<a href="/login" class="fa-solid fa-lock" <% if ( locals.logged ) { %>title="connected as <%- locals.user %>" <% } %>></a>
+	</div>
+	<div>
+		<i class="connectionStatus fa-solid fa-globe disconnected"></i>
+	</div>
 </nav>
