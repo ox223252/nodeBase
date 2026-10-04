@@ -54,22 +54,22 @@ export default function ( params )
 			default: 'private/userDB.js',
 		})
 		.option ( 'login.ad.port', {
-			describe: '',
+			describe: 'ldap : 389, ldaps : 636',
 			type: 'number',
 			default: 389,
 		})
 		.option ( 'login.ad.url', {
-			describe: '',
+			describe: 'ldap(s) login url',
 			type: 'url',
-			default: 'ldap://ldap.domain.com',
+			default: undefined,
 		})
 		.option ( 'login.ad.baseDN', {
-			describe: '',
-			default: 'dc=fldap,dc=domain,dc=com',
+			describe: 'dc=XXX,dc=YYY',
+			default: '',
 		})
 		.option ( 'login.ad.domain', {
-			describe: 'add @domain.com to login fi needed',
-			default: 'domain.com',
+			describe: 'add <login>@domain.com to login if needed',
+			default: '',
 		})
 		.argv;
 
