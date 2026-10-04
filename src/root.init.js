@@ -98,18 +98,6 @@ export default async function ( params )
 
 	exp.use ( function ( req, res, next )
 	{
-		res.locals.nonce  = crypto.randomBytes ( 16 ).toString ( "base64" );
-
-		res.locals.title = params.name;
-		res.locals.user = req.session.user || "unknow";
-		res.locals.page = req.originalUrl;
-		res.locals.logged = req.session.logged;
-
-		next ( );
-	});
-
-	exp.use ( function ( req, res, next )
-	{
 		if ( [ "/", "/login", "/favicon.ico" ].includes ( req.originalUrl ) )
 		{
 			next ( );
@@ -127,6 +115,13 @@ export default async function ( params )
 				break;
 			}
 		}
+	});
+
+	exp.use ( function ( req, res, next )
+	{
+		res.locals.nonce  = crypto.randomBytes ( 16 ).toString ( "base64" );
+
+		next ( );
 	});
 
 	exp.use ( helmet.contentSecurityPolicy({
