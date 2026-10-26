@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+# arrêt seulement en cas de suppression ; en mise à jour, postinst redémarre
+if [ "$1" = "remove" ] && [ -d /run/systemd/system ]; then
+	systemctl stop @NAME@.service || true
+	systemctl disable @NAME@.service || true
+fi
+
+exit 0

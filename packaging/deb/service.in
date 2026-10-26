@@ -1,0 +1,30 @@
+[Unit]
+Description=@NAME@ - base des outils web
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@NAME@
+Group=@NAME@
+EnvironmentFile=/etc/@NAME@/default
+ExecStart=/usr/bin/node /usr/share/@NAME@/index.js
+WorkingDirectory=/var/lib/@NAME@
+# crée /var/lib/@NAME@ ( 700, propriétaire @NAME@ ) au démarrage
+StateDirectory=@NAME@
+StateDirectoryMode=0700
+Restart=on-failure
+RestartSec=5
+
+# autorise un port < 1024 ( 443 ) sans être root
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+# durcissement
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+
+[Install]
+WantedBy=multi-user.target

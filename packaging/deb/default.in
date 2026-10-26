@@ -1,0 +1,19 @@
+# Configuration de @NAME@, lue par systemd ( EnvironmentFile )
+# Toute option de la ligne de commande : @ENV@_<OPTION>
+#   camelCase -> MOT_MOT, "." -> "__"
+#   liste complète : node /usr/share/@NAME@/index.js --help
+# Après modification : systemctl restart @NAME@
+
+@ENV@_SERVER__PORT=6800
+@ENV@_SERVER__SECURE=true
+
+# données hors de /usr ( clé, certificat, base utilisateurs )
+@ENV@_SERVER__TLS__PATH=/var/lib/@NAME@
+@ENV@_LOGIN__FILE=/var/lib/@NAME@/userDB.js
+
+@ENV@_LOGIN__MODE=file
+#@ENV@_LOGIN__AD__URL=ldaps://serveur:636
+#@ENV@_LOGIN__AD__BASE_DN=DC=domaine,DC=fr
+#@ENV@_LOGIN__AD__GROUP=CN=AppUsers,OU=Groupes,DC=domaine,DC=fr
+#@ENV@_LOGIN__AD__BIND__USER=
+#@ENV@_LOGIN__AD__BIND__PASSWORD=

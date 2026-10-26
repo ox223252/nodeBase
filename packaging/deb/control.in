@@ -1,0 +1,16 @@
+Package: @NAME@
+Version: @VERSION@
+Architecture: all
+Maintainer: ox223252 <23252@laposte.net>
+Installed-Size: @SIZE@
+Depends: nodejs (>= 20.19), openssl
+Suggests: pamtester
+Section: web
+Priority: optional
+Homepage: https://example.invalid/@NAME@
+Description: base des outils web
+ Serveur Node.js / Express 5 + EJS + Socket.io avec authentification
+ par fichier, Linux (PAM) ou Active Directory.
+ .
+ Le service tourne sous l'utilisateur système "@NAME@" ;
+ configuration dans /etc/@NAME@/default, données dans /var/lib/@NAME@.

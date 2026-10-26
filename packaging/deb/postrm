@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+	purge)
+		# apt purge : suppression des données et de l'utilisateur
+		rm -rf /var/lib/@NAME@
+		if getent passwd @NAME@ > /dev/null; then
+			userdel @NAME@ || true
+		fi
+		;;
+esac
+
+if [ -d /run/systemd/system ]; then
+	systemctl daemon-reload || true
+fi
+
+exit 0

@@ -1,0 +1,27 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+	configure)
+		# utilisateur système dédié
+		if ! getent passwd @NAME@ > /dev/null; then
+			useradd --system --user-group --home-dir /var/lib/@NAME@ \
+				--no-create-home --shell /usr/sbin/nologin @NAME@
+		fi
+
+		# la configuration peut contenir le mot de passe du compte AD
+		chown root:@NAME@ /etc/@NAME@/default
+		chmod 0640 /etc/@NAME@/default
+
+		if [ -d /run/systemd/system ]; then
+			systemctl daemon-reload
+			# première installation ( $2 vide ) : activation au démarrage
+			if [ -z "$2" ]; then
+				systemctl enable @NAME@.service
+			fi
+			systemctl restart @NAME@.service
+		fi
+		;;
+esac
+
+exit 0
