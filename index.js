@@ -3,6 +3,7 @@ import cmd from "./src/cmd.js"
 import init from "./src/root.init.js"
 import root from "./src/root.main.js"
 import ajax from "./src/root.ajax.js"
+import error from "./src/root.error.js"
 import user from "./src/db.user.js"
 import socket from "./src/ioSocket.js"
 
@@ -24,6 +25,7 @@ getParams ( params )
 	.then ( init )
 	.then ( root )
 	.then ( ajax )
+	.then ( error )
 	.then ( socket )
 	.then ( cmd )
 	.catch ( r=>{

@@ -7,6 +7,7 @@ Wants=network-online.target
 Type=simple
 User=@NAME@
 Group=@NAME@
+Environment=NODE_ENV=production
 EnvironmentFile=/etc/@NAME@/default
 ExecStart=/usr/bin/node /usr/share/@NAME@/index.js
 WorkingDirectory=/var/lib/@NAME@
