@@ -21,11 +21,16 @@ export default function ( params )
 
 		if ( req.path.startsWith ( "/ajax/" ) )
 		{
+			console.log ( "AJAX" );
 			return next ( );
 		}
 
 		switch ( req.session.logged )
 		{
+			case "admin":
+			{
+				routes.push ( "/users" );
+			}
 			default:
 			{
 				routes.push ( "/" );
@@ -74,6 +79,14 @@ export default function ( params )
 		}
 
 		res.render ( 'login.html' );
+	});
+
+	params.express.get ( '/users', function ( req, res )
+	{
+		res.render ( 'users.html', {
+			fileMode: params.login.mode,
+			users: params.login.users ?? [],
+		});
 	});
 
 	return params;

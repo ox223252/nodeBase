@@ -1,7 +1,7 @@
 import getParams from "./src/args.js"
 import cmd from "./src/cmd.js"
 import init from "./src/root.init.js"
-import root from "./src/root.main.js"
+import root from "./src/root.js"
 import ajax from "./src/root.ajax.js"
 import error from "./src/root.error.js"
 import user from "./src/db.user.js"
@@ -23,8 +23,8 @@ let params = {
 getParams ( params )
 	.then ( user )
 	.then ( init )
-	.then ( root )
 	.then ( ajax )
+	.then ( root )
 	.then ( error )
 	.then ( socket )
 	.then ( cmd )
